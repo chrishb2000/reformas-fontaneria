@@ -50,12 +50,15 @@ textarea{resize:vertical;min-height:60px}
 .pcard h3{font-size:16px;margin-bottom:2px}
 .pcard small{color:var(--texto2);font-size:13px}
 .ptot{font-weight:600;font-size:16px;color:var(--az)}
-/* PARTIDAS CON TEXTAREA Y MULTILINEA */
-.irow{display:grid;grid-template-columns:120px 1fr 90px 75px 32px;gap:6px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--grisc)}
-.icat{grid-template-columns:1fr!important;font-weight:600;color:var(--az);background:#e3f2fd;border-radius:6px;padding:6px 10px;border:none!important;margin-top:4px}
-.irow input,.irow select,.irow textarea{padding:6px 6px;font-size:13px}
-.irow textarea{min-height:48px;resize:vertical}
-.idel{color:var(--ro);font-size:20px;cursor:pointer;background:none;border:none;padding:2px;min-width:30px;touch-action:manipulation;margin-top:4px}
+
+/* NUEVA ESTRUCTURA DE PARTIDAS (EN 2 FILAS LIMPIAS) */
+.item-card{background:#fafafa;border:1px solid var(--grisc);border-radius:8px;padding:12px;margin-bottom:8px}
+.item-top-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:8px}
+.item-desc-row{margin-bottom:8px}
+.item-bottom-row{display:grid;grid-template-columns:1fr 110px;gap:8px;align-items:center}
+.icat-banner{font-weight:600;color:var(--az);background:#e3f2fd;border-radius:6px;padding:6px 10px;margin-top:12px;margin-bottom:6px}
+.idel{color:var(--ro);font-size:20px;cursor:pointer;background:none;border:none;padding:2px;min-width:30px;touch-action:manipulation}
+
 /* RESUMEN */
 .sr{display:flex;justify-content:space-between;padding:8px 0;font-size:15px;border-bottom:1px solid var(--grisc)}
 .sr:last-child{border:none}
@@ -84,9 +87,6 @@ textarea{resize:vertical;min-height:60px}
 .mvacio{text-align:center;color:var(--texto2);padding:40px 16px;font-size:15px}
 /* ERROR DIAGNOSTICO */
 #errDiag{background:#ffebee;color:#c62828;padding:12px;border-radius:8px;margin:8px 0;font-size:13px;display:none}
-@media(min-width:600px){
-  .irow{grid-template-columns:140px 1fr 110px 85px 36px}
-}
 </style>
 </head>
 <body>
@@ -777,7 +777,7 @@ function renderItems() {
     var cat = cats[c];
     var cits = g[cat.id] || [];
     if (cits.length === 0) continue;
-    h += '<div class="irow icat">' + cat.n + '</div>';
+    h += '<div class="icat-banner">' + cat.n + '</div>';
     for (var j = 0; j < cits.length; j++) {
       h += renderItem(cits[j], cats);
     }
@@ -806,22 +806,28 @@ function renderItem(it, cats) {
             cats[i].n + '</option>';
   }
   var ivaVal = (it.iva != null ? it.iva : (M.empresa.iva || 21));
-  return '<div class="irow" data-itid="' + it.id + '">' +
-    '<select data-campo="ci">' + opts + '</select>' +
-    '<textarea data-campo="n" placeholder="Descripcion de la partida...">' + esc(it.n || '') + '</textarea>' +
-    '<input type="number" data-campo="pu" step="0.01" min="0" value="' + (it.pu || 0) + '" placeholder="Precio">' +
-    '<select data-campo="iva" style="width:75px">' +
-      '<option value="21"' + (ivaVal == 21 ? ' selected' : '') + '>21%</option>' +
-      '<option value="10"' + (ivaVal == 10 ? ' selected' : '') + '>10%</option>' +
-      '<option value="4"' + (ivaVal == 4 ? ' selected' : '') + '>4%</option>' +
-      '<option value="0"' + (ivaVal == 0 ? ' selected' : '') + '>0%</option>' +
-    '</select>' +
-    '<button class="idel" data-itid="' + it.id + '">&#215;</button>' +
-    '</div>';
+  return '<div class="item-card" data-itid="' + it.id + '">' +
+    '<div class="item-top-row">' +
+      '<select data-campo="ci" style="max-width:60%">' + opts + '</select>' +
+      '<button class="idel" data-itid="' + it.id + '">&#215;</button>' +
+    '</div>' +
+    '<div class="item-desc-row">' +
+      '<textarea data-campo="n" placeholder="Descripcion detallada de la partida...">' + esc(it.n || '') + '</textarea>' +
+    '</div>' +
+    '<div class="item-bottom-row">' +
+      '<input type="number" data-campo="pu" step="0.01" min="0" value="' + (it.pu || 0) + '" placeholder="Precio €">' +
+      '<select data-campo="iva">' +
+        '<option value="21"' + (ivaVal == 21 ? ' selected' : '') + '>21% IVA</option>' +
+        '<option value="10"' + (ivaVal == 10 ? ' selected' : '') + '>10% IVA</option>' +
+        '<option value="4"' + (ivaVal == 4 ? ' selected' : '') + '>4% IVA</option>' +
+        '<option value="0"' + (ivaVal == 0 ? ' selected' : '') + '>0% IVA</option>' +
+      '</select>' +
+    '</div>' +
+  '</div>';
 }
 
 function manejarCambioItem(e) {
-  var fila = e.target.closest('.irow');
+  var fila = e.target.closest('.item-card');
   if (!fila) return;
   var id = fila.getAttribute('data-itid');
   var campo = e.target.getAttribute('data-campo');
