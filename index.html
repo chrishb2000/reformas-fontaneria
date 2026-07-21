@@ -50,11 +50,12 @@ textarea{resize:vertical;min-height:60px}
 .pcard h3{font-size:16px;margin-bottom:2px}
 .pcard small{color:var(--texto2);font-size:13px}
 .ptot{font-weight:600;font-size:16px;color:var(--az)}
-/* PARTIDAS CON IVA INDIVIDUAL */
-.irow{display:grid;grid-template-columns:120px 1fr 90px 75px 32px;gap:6px;align-items:center;padding:8px 0;border-bottom:1px solid var(--grisc)}
+/* PARTIDAS CON TEXTAREA Y MULTILINEA */
+.irow{display:grid;grid-template-columns:120px 1fr 90px 75px 32px;gap:6px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--grisc)}
 .icat{grid-template-columns:1fr!important;font-weight:600;color:var(--az);background:#e3f2fd;border-radius:6px;padding:6px 10px;border:none!important;margin-top:4px}
-.irow input,.irow select{padding:6px 6px;font-size:13px}
-.idel{color:var(--ro);font-size:20px;cursor:pointer;background:none;border:none;padding:2px;min-width:30px;touch-action:manipulation}
+.irow input,.irow select,.irow textarea{padding:6px 6px;font-size:13px}
+.irow textarea{min-height:48px;resize:vertical}
+.idel{color:var(--ro);font-size:20px;cursor:pointer;background:none;border:none;padding:2px;min-width:30px;touch-action:manipulation;margin-top:4px}
 /* RESUMEN */
 .sr{display:flex;justify-content:space-between;padding:8px 0;font-size:15px;border-bottom:1px solid var(--grisc)}
 .sr:last-child{border:none}
@@ -290,7 +291,7 @@ window.onerror = function(msg, src, linea, col, err) {
 };
 
 // CREDANCIALES DE ACCESO
-var AUTH_USER = 'admin';
+var AUTH_USER = 'Admin';
 var AUTH_PASS = 'reformas1234';
 
 var CATS = [
@@ -783,7 +784,7 @@ function renderItems() {
   }
   h += '<button class="btn bor bsm" style="margin-top:8px;width:100%" id="btnAddItem">+ Anadir partida</button>';
   sg('itemsDiv').innerHTML = h;
-  var inputs = sg('itemsDiv').querySelectorAll('input, select');
+  var inputs = sg('itemsDiv').querySelectorAll('input, select, textarea');
   for (var k = 0; k < inputs.length; k++) {
     inputs[k].addEventListener('change', manejarCambioItem);
     inputs[k].addEventListener('input', manejarCambioItem);
@@ -807,7 +808,7 @@ function renderItem(it, cats) {
   var ivaVal = (it.iva != null ? it.iva : (M.empresa.iva || 21));
   return '<div class="irow" data-itid="' + it.id + '">' +
     '<select data-campo="ci">' + opts + '</select>' +
-    '<input type="text" data-campo="n" value="' + esc(it.n || '') + '" placeholder="Concepto">' +
+    '<textarea data-campo="n" placeholder="Descripcion de la partida...">' + esc(it.n || '') + '</textarea>' +
     '<input type="number" data-campo="pu" step="0.01" min="0" value="' + (it.pu || 0) + '" placeholder="Precio">' +
     '<select data-campo="iva" style="width:75px">' +
       '<option value="21"' + (ivaVal == 21 ? ' selected' : '') + '>21%</option>' +
@@ -1077,7 +1078,7 @@ function usarPlantilla(id) {
 }
 
 // ══════════════════════════════════════════
-//  PDF CON LOGO
+//  PDF CON MULTILINEA EN CONCEPTO
 // ══════════════════════════════════════════
 function exportarPDF() {
   if (!window.jspdf) {
@@ -1178,12 +1179,18 @@ function generarPDF() {
       var cst = 0;
       for (var ii = 0; ii < cits.length; ii++) {
         var it = cits[ii];
-        if (y > 270) { doc.addPage(); y = 20; }
+        if (y > 265) { doc.addPage(); y = 20; }
         doc.setFontSize(8); doc.setFont('helvetica', 'normal');
         var tIvaStr = (it.iva != null ? it.iva : (M.empresa.iva || 21)) + '%';
-        doc.text(String(it.n || '-') + ' (' + tIvaStr + ' IVA)', 15, y);
+        
+        var textoConcepto = String(it.n || '-') + ' (' + tIvaStr + ' IVA)';
+        var lineasTexto = doc.splitTextToSize(textoConcepto, 150);
+        doc.text(lineasTexto, 15, y);
         doc.text(fmt(it.pu), 172, y);
-        cst += it.pu || 0; y += 5;
+        
+        var altoBloque = lineasTexto.length * 4;
+        cst += it.pu || 0;
+        y += Math.max(altoBloque, 5);
       }
       doc.setFont('helvetica', 'bold');
       doc.text('Subtotal ' + cat.n + ': ' + fmt(cst), 15, y); y += 7;
